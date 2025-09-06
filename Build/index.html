@@ -224,9 +224,15 @@
             }
         }
 
-        // Prevent context menu on canvas
-        canvas.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
+        // Wait for DOM to be fully loaded before adding event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent context menu on canvas
+            var gameCanvas = document.querySelector('#unity-canvas');
+            if (gameCanvas) {
+                gameCanvas.addEventListener('contextmenu', function (e) {
+                    e.preventDefault();
+                });
+            }
         });
 
         // Handle fullscreen
@@ -234,8 +240,8 @@
             if (e.key === 'F11') {
                 e.preventDefault();
                 if (!document.fullscreenElement) {
-                    container.requestFullscreen().catch(err => {
-                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    container.requestFullscreen().catch(function(err) {
+                        console.log('Error attempting to enable fullscreen: ' + err.message);
                     });
                 } else {
                     document.exitFullscreen();
