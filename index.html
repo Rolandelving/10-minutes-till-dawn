@@ -17,141 +17,40 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #231F20;
         }
         
-        #unity-canvas {
+        canvas {
             background-color: #231F20;
             display: block;
         }
-        
-        #loadingBar {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            z-index: 1000;
-            background-color: rgba(35, 31, 32, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-        }
-        
-        .progress {
-            width: 200px;
-            height: 20px;
-            background-color: #444;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px auto;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: #4CAF50;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="unity-canvas"></canvas>
-        <div id="loadingBar">
-            <div>10 Minutes Till Dawn</div>
-            <div class="progress">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            <div id="loading-text">Loading...</div>
-        </div>
-    </div>
+    <div id="gameContainer"></div>
 
     <script src="Build/UnityLoader.js"></script>
     <script>
-        var gameInstance;
-        var canvas = document.getElementById('unity-canvas');
-        var loadingBar = document.getElementById('loadingBar');
-        var progressFill = document.getElementById('progress-fill');
-        var loadingText = document.getElementById('loading-text');
-
-        function updateProgress(progress) {
-            var percent = Math.round(progress * 100);
-            progressFill.style.width = percent + '%';
-            loadingText.textContent = 'Loading... ' + percent + '%';
-        }
-
-        function hideLoading() {
-            loadingBar.classList.add('hidden');
-        }
+        var gameInstance = UnityLoader.instantiate("gameContainer", "Build/10MinutesTillDawnWebGL.json");
 
         function resizeCanvas() {
-            if (!canvas || !gameInstance) return;
-
-            var containerWidth = window.innerWidth;
-            var containerHeight = window.innerHeight;
+            if (!gameInstance || !gameInstance.Module || !gameInstance.Module.canvas) return;
             
-            // Use a reasonable aspect ratio
-            var targetAspect = 16 / 9;
-            var containerAspect = containerWidth / containerHeight;
-
-            var width, height;
-            if (containerAspect > targetAspect) {
-                height = containerHeight;
-                width = height * targetAspect;
-            } else {
-                width = containerWidth;
-                height = width / targetAspect;
+            var canvas = gameInstance.Module.canvas;
+            var w = window.innerWidth;
+            var h = window.innerHeight;
+            var r = 9 / 16; // 16:9 aspect ratio
+            
+            if (w * r > h) {
+                w = Math.ceil(h / r);
             }
-
-            canvas.style.width = width + 'px';
-            canvas.style.height = height + 'px';
+            h = Math.floor(w * r);
             
-            console.log('Canvas resized to:', width + 'x' + height);
+            canvas.style.width = w + "px";
+            canvas.style.height = h + "px";
         }
 
-        // Load the Unity game
-        try {
-            console.log('Starting Unity game...');
-            gameInstance = UnityLoader.instantiate('unity-canvas', 'Build/10MinutesTillDawnWebGL.json', {
-                onProgress: function(gameInstance, progress) {
-                    console.log('Loading progress:', Math.round(progress * 100) + '%');
-                    updateProgress(progress);
-                },
-                onComplete: function(gameInstance) {
-                    console.log('Unity game loaded successfully!');
-                    hideLoading();
-                    resizeCanvas();
-                    
-                    // Force canvas to be visible
-                    canvas.style.display = 'block';
-                    canvas.style.visibility = 'visible';
-                    canvas.style.opacity = '1';
-                }
-            });
-        } catch (error) {
-            console.error('Error loading Unity:', error);
-            loadingText.textContent = 'Error: ' + error.message;
-        }
-
-        // Resize handler
-        window.addEventListener('resize', resizeCanvas);
-
-        // Hide loading menu after 5 seconds regardless
-        setTimeout(function() {
-            console.log('Auto-hiding loading menu after 5 seconds');
-            hideLoading();
-            if (canvas) {
-                canvas.style.display = 'block';
-                canvas.style.visibility = 'visible';
-                canvas.style.opacity = '1';
-                resizeCanvas();
-                console.log('Force-showed canvas');
-            }
-        }, 5000);
+        window.addEventListener("resize", resizeCanvas);
+        setTimeout(resizeCanvas, 1000);
     </script>
 </body>
 </html>
