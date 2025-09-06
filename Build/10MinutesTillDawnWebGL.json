@@ -2,7 +2,7 @@
   "companyName": "Rolandelving",
   "productName": "10MinutesTillDawn",
   "productVersion": "0.1",
-  "dataUrl": "10MinutesTillDawnWebGL.data.unityweb",
+  "dataUrl": "10MinutesTillDawnWebGL.data (1).unityweb",
   "wasmCodeUrl": "10MinutesTillDawnWebGL.wasm.code.unityweb",
   "wasmFrameworkUrl": "10MinutesTillDawnWebGL.wasm.framework.unityweb",
   "graphicsAPI": ["WebGL 2.0", "WebGL 1.0"],
