@@ -2,174 +2,154 @@
 <html lang="en-us">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>10 Minutes Till Dawn</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #231F20;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            overflow: hidden;
         }
         
         #gameContainer {
-            position: relative;
-        }
-        
-        canvas {
-            display: block;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             background-color: #231F20;
         }
         
+        #unity-canvas {
+            background-color: #231F20;
+            display: block;
+        }
+        
         #loadingBar {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            color: white;
+            font-family: Arial, sans-serif;
             text-align: center;
+            z-index: 1000;
+            background-color: rgba(35, 31, 32, 0.9);
+            padding: 20px;
+            border-radius: 10px;
         }
         
-        #loadingBar .progress {
+        .progress {
             width: 200px;
-            height: 18px;
-            background-color: #333;
-            border-radius: 9px;
+            height: 20px;
+            background-color: #444;
+            border-radius: 10px;
             overflow: hidden;
-            margin: 20px auto;
+            margin: 10px auto;
         }
         
-        #loadingBar .full {
+        .progress-fill {
             height: 100%;
             background-color: #4CAF50;
             width: 0%;
             transition: width 0.3s;
         }
         
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="unity-canvas" width="960" height="600"></canvas>
+        <canvas id="unity-canvas"></canvas>
         <div id="loadingBar">
-            <div style="margin-bottom: 10px;">10 Minutes Till Dawn</div>
+            <div>10 Minutes Till Dawn</div>
             <div class="progress">
-                <div class="full" id="loadingBarFull"></div>
+                <div class="progress-fill" id="progress-fill"></div>
             </div>
-            <div id="loadingText">Loading...</div>
+            <div id="loading-text">Loading...</div>
         </div>
     </div>
 
+    <script src="Build/UnityLoader.js"></script>
     <script>
-        console.log('Starting to load Unity game...');
-        
-        // First, let's test if we can reach the files
-        fetch('Build/UnityLoader.js')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('UnityLoader.js not found: ' + response.status);
-                }
-                console.log('UnityLoader.js found successfully');
-                return fetch('Build/10MinutesTillDawnWebGL.json');
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('JSON config not found: ' + response.status);
-                }
-                console.log('JSON config found successfully');
-                return response.json();
-            })
-            .then(config => {
-                console.log('Unity config loaded:', config);
-                loadUnityScript();
-            })
-            .catch(error => {
-                console.error('File check failed:', error);
-                document.getElementById('loadingText').innerHTML = 
-                    'Error: ' + error.message + '<br><small>Check console for details</small>';
-            });
+        var gameInstance;
+        var canvas = document.getElementById('unity-canvas');
+        var loadingBar = document.getElementById('loadingBar');
+        var progressFill = document.getElementById('progress-fill');
+        var loadingText = document.getElementById('loading-text');
 
-        function loadUnityScript() {
-            var script = document.createElement('script');
-            script.src = 'Build/UnityLoader.js';
-            script.onload = function() {
-                console.log('UnityLoader.js loaded successfully');
-                startUnityGame();
-            };
-            script.onerror = function() {
-                console.error('Failed to load UnityLoader.js');
-                document.getElementById('loadingText').textContent = 'Failed to load Unity framework';
-            };
-            document.head.appendChild(script);
+        function updateProgress(progress) {
+            var percent = Math.round(progress * 100);
+            progressFill.style.width = percent + '%';
+            loadingText.textContent = 'Loading... ' + percent + '%';
         }
 
-        function startUnityGame() {
-            if (typeof UnityLoader === 'undefined') {
-                console.error('UnityLoader is not defined after script load');
-                document.getElementById('loadingText').textContent = 'Unity framework not available';
-                return;
-            }
-
-            console.log('Starting Unity game instantiation...');
-            
-            try {
-                var gameInstance = UnityLoader.instantiate("unity-canvas", "Build/10MinutesTillDawnWebGL.json", {
-                    onProgress: function (gameInstance, progress) {
-                        console.log('Loading progress: ' + Math.round(progress * 100) + '%');
-                        document.getElementById('loadingBarFull').style.width = (100 * progress) + "%";
-                        document.getElementById('loadingText').textContent = Math.round(progress * 100) + '%';
-                    },
-                    onComplete: function (gameInstance) {
-                        console.log('Unity game loaded completely!');
-                        document.getElementById('loadingBar').classList.add('hidden');
-                        resizeCanvas();
-                    },
-                    onError: function(gameInstance, error) {
-                        console.error('Unity loading error:', error);
-                        document.getElementById('loadingText').innerHTML = 
-                            'Loading failed<br><small>' + error + '</small>';
-                    }
-                });
-            } catch (error) {
-                console.error('Unity instantiation failed:', error);
-                document.getElementById('loadingText').innerHTML = 
-                    'Failed to start game<br><small>' + error.message + '</small>';
-            }
+        function hideLoading() {
+            loadingBar.classList.add('hidden');
         }
 
         function resizeCanvas() {
-            var canvas = document.getElementById('unity-canvas');
-            var container = document.getElementById('gameContainer');
+            if (!canvas || !gameInstance) return;
+
+            var containerWidth = window.innerWidth;
+            var containerHeight = window.innerHeight;
             
-            if (!canvas) return;
+            // Use a reasonable aspect ratio
+            var targetAspect = 16 / 9;
+            var containerAspect = containerWidth / containerHeight;
 
-            var targetAspect = 960 / 600;
-            var windowAspect = window.innerWidth / window.innerHeight;
-
-            if (windowAspect > targetAspect) {
-                canvas.style.height = window.innerHeight + "px";
-                canvas.style.width = (window.innerHeight * targetAspect) + "px";
+            var width, height;
+            if (containerAspect > targetAspect) {
+                height = containerHeight;
+                width = height * targetAspect;
             } else {
-                canvas.style.width = window.innerWidth + "px";
-                canvas.style.height = (window.innerWidth / targetAspect) + "px";
+                width = containerWidth;
+                height = width / targetAspect;
             }
+
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            
+            console.log('Canvas resized to:', width + 'x' + height);
         }
 
+        // Load the Unity game
+        try {
+            console.log('Starting Unity game...');
+            gameInstance = UnityLoader.instantiate('unity-canvas', 'Build/10MinutesTillDawnWebGL.json', {
+                onProgress: function(gameInstance, progress) {
+                    console.log('Loading progress:', Math.round(progress * 100) + '%');
+                    updateProgress(progress);
+                },
+                onComplete: function(gameInstance) {
+                    console.log('Unity game loaded successfully!');
+                    hideLoading();
+                    resizeCanvas();
+                    
+                    // Force canvas to be visible
+                    canvas.style.display = 'block';
+                    canvas.style.visibility = 'visible';
+                    canvas.style.opacity = '1';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading Unity:', error);
+            loadingText.textContent = 'Error: ' + error.message;
+        }
+
+        // Resize handler
         window.addEventListener('resize', resizeCanvas);
-        
-        // Prevent right-click
-        document.addEventListener('contextmenu', function(e) {
-            if (e.target.tagName === 'CANVAS') {
-                e.preventDefault();
+
+        // Make sure canvas is visible after a delay
+        setTimeout(function() {
+            if (canvas) {
+                canvas.style.display = 'block';
+                canvas.style.visibility = 'visible';
+                canvas.style.opacity = '1';
+                resizeCanvas();
+                console.log('Force-showed canvas');
             }
-        });
+        }, 3000);
     </script>
 </body>
 </html>
