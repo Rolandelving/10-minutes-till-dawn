@@ -140,8 +140,10 @@
         // Resize handler
         window.addEventListener('resize', resizeCanvas);
 
-        // Make sure canvas is visible after a delay
+        // Hide loading menu after 5 seconds regardless
         setTimeout(function() {
+            console.log('Auto-hiding loading menu after 5 seconds');
+            hideLoading();
             if (canvas) {
                 canvas.style.display = 'block';
                 canvas.style.visibility = 'visible';
@@ -149,7 +151,7 @@
                 resizeCanvas();
                 console.log('Force-showed canvas');
             }
-        }, 3000);
+        }, 5000);
     </script>
 </body>
 </html>
