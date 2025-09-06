@@ -3,10 +3,24 @@
   <head>
     <meta charset="utf-8">
     <title>10 Minutes Till Dawn</title>
-    <script src="https://cdn.jsdelivr.net/gh/Rolandelving/10-minutes-till-dawn@main/Build/UnityLoader.js"></script>
-    <script>
-      var unityInstance = UnityLoader.instantiate("unityContainer", "https://cdn.jsdelivr.net/gh/Rolandelving/10-minutes-till-dawn@main/Build/10MinutesTillDawnWebGL.json");
-    </script>
+<div id="unityContainer" style="width:960px; height:600px; background:#231F20"></div>
+<script src="https://cdn.jsdelivr.net/gh/Rolandelving/10-minutes-till-dawn@main/Build/UnityLoader.js"></script>
+<script>
+  var buildUrl = "https://cdn.jsdelivr.net/gh/Rolandelving/10-minutes-till-dawn@main/Build";
+  var config = {
+    dataUrl: buildUrl + "/10MinutesTillDawnWebGL.data.unityweb",
+    frameworkUrl: buildUrl + "/10MinutesTillDawnWebGL.wasm.framework.unityweb",
+    codeUrl: buildUrl + "/10MinutesTillDawnWebGL.wasm.code.unityweb",
+    companyName: "Flanne",
+    productName: "MinutesTillDawn",
+    productVersion: "0.1",
+    backgroundColor: "#231F20",
+    splashScreenStyle: "Dark",
+    graphicsAPI: ["WebGL 2.0","WebGL 1.0"],
+    showBanner: function(msg, type) { console.log(msg); }
+  };
+  UnityLoader.instantiate("unityContainer", buildUrl + "/10MinutesTillDawnWebGL.json", config);
+</script>
     <style>
       body, html { margin: 0; padding: 0; height: 100%; background: black; }
       #unityContainer { width: 100%; height: 100%; }
