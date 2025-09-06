@@ -3,174 +3,173 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Minutes Till Dawn</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    
-    <!-- Load UnityLoader from CDN -->
-    <script src="https://cdn.jsdelivr.net/gh/Rolandelving/10-minutes-till-dawn@main/Build/UnityLoader.js"></script>
-    
-    <script>
-      var gameInstance;
-      var scaleToFit = true;
-
-      // Initialize the Unity game
-      function initializeGame() {
-        try {
-          gameInstance = UnityLoader.instantiate("gameContainer", "Build/10MinutesTillDawnWebGL.json");
-        } catch (error) {
-          console.error("Failed to load Unity game:", error);
-          document.getElementById("gameContainer").innerHTML = '<div style="color: white; text-align: center; padding: 50px; font-family: Arial;">Failed to load Unity game. Please check console for details.</div>';
-        }
-      }
-
-      function onResize() {
-        if (!gameInstance || !gameInstance.Module || !gameInstance.Module.canvas) {
-          return;
-        }
-
-        var canvas = gameInstance.Module.canvas;
-        var container = gameInstance.container;
-        var w, h;
-
-        if (scaleToFit) {
-          w = window.innerWidth;
-          h = window.innerHeight;
-
-          // Use aspect ratio from your JSON (assuming 16:10 based on common Unity defaults)
-          var aspectRatio = 10 / 16; // height / width
-
-          if (w * aspectRatio > window.innerHeight) {
-            w = Math.min(w, Math.ceil(h / aspectRatio));
-          }
-          h = Math.floor(w * aspectRatio);
-        } else {
-          w = 1280; // Default width
-          h = 800;  // Default height
-        }
-
-        container.style.width = canvas.style.width = w + "px";
-        container.style.height = canvas.style.height = h + "px";
-        container.style.top = Math.floor((window.innerHeight - h) / 2) + "px";
-        container.style.left = Math.floor((window.innerWidth - w) / 2) + "px";
-      }
-
-      // Add event listeners when page loads
-      window.addEventListener("load", function() {
-        initializeGame();
-        onResize();
-      });
-      
-      window.addEventListener("resize", onResize);
-    </script>
-
+    <title>10 Minutes Till Dawn</title>
     <style>
-      html,
-      body {
-        background: #231F20;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        padding: 0;
-        margin: 0;
-        font-family: Arial, sans-serif;
-      }
-
-      div#gameContainer {
-        background: transparent !important;
-        position: absolute;
-      }
-
-      div#gameContainer canvas {
-        position: absolute;
-        background: #231F20;
-      }
-
-      div#gameContainer[data-pixelated="true"] canvas {
-        image-rendering: optimizeSpeed;
-        image-rendering: -webkit-crisp-edges;
-        image-rendering: -moz-crisp-edges;
-        image-rendering: -o-crisp-edges;
-        image-rendering: crisp-edges;
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: optimize-contrast;
-        image-rendering: pixelated;
-        -ms-interpolation-mode: nearest-neighbor;
-      }
-
-      /* Loading indicator */
-      .loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 18px;
-        z-index: 1000;
-      }
-
-      .loading::after {
-        content: '';
-        animation: dots 1.5s steps(5, end) infinite;
-      }
-
-      @keyframes dots {
-        0%, 20% {
-          color: rgba(0,0,0,0);
-          text-shadow:
-            .25em 0 0 rgba(255,255,255,0),
-            .5em 0 0 rgba(255,255,255,0);
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #231F20;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-        40% {
-          color: white;
-          text-shadow:
-            .25em 0 0 rgba(255,255,255,0),
-            .5em 0 0 rgba(255,255,255,0);
+        
+        #gameContainer {
+            position: relative;
         }
-        60% {
-          text-shadow:
-            .25em 0 0 white,
-            .5em 0 0 rgba(255,255,255,0);
+        
+        canvas {
+            display: block;
+            background-color: #231F20;
         }
-        80%, 100% {
-          text-shadow:
-            .25em 0 0 white,
-            .5em 0 0 white;
+        
+        #loadingBar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
         }
-      }
+        
+        #loadingBar .progress {
+            width: 200px;
+            height: 18px;
+            background-color: #333;
+            border-radius: 9px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+        
+        #loadingBar .full {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
-
 <body>
-    <div id="gameContainer" data-pixelated="true">
-        <div class="loading">Loading Unity Game</div>
+    <div id="gameContainer">
+        <canvas id="unity-canvas" width="960" height="600"></canvas>
+        <div id="loadingBar">
+            <div style="margin-bottom: 10px;">10 Minutes Till Dawn</div>
+            <div class="progress">
+                <div class="full" id="loadingBarFull"></div>
+            </div>
+            <div id="loadingText">Loading...</div>
+        </div>
     </div>
-    
+
     <script>
-      // Prevent right-click context menu
-      document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-      });
+        console.log('Starting to load Unity game...');
+        
+        // First, let's test if we can reach the files
+        fetch('Build/UnityLoader.js')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('UnityLoader.js not found: ' + response.status);
+                }
+                console.log('UnityLoader.js found successfully');
+                return fetch('Build/10MinutesTillDawnWebGL.json');
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('JSON config not found: ' + response.status);
+                }
+                console.log('JSON config found successfully');
+                return response.json();
+            })
+            .then(config => {
+                console.log('Unity config loaded:', config);
+                loadUnityScript();
+            })
+            .catch(error => {
+                console.error('File check failed:', error);
+                document.getElementById('loadingText').innerHTML = 
+                    'Error: ' + error.message + '<br><small>Check console for details</small>';
+            });
 
-      // Handle fullscreen
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'F11') {
-          e.preventDefault();
-          var container = document.getElementById('gameContainer');
-          if (!document.fullscreenElement) {
-            if (container.requestFullscreen) {
-              container.requestFullscreen();
-            }
-          } else {
-            if (document.exitFullscreen) {
-              document.exitFullscreen();
-            }
-          }
+        function loadUnityScript() {
+            var script = document.createElement('script');
+            script.src = 'Build/UnityLoader.js';
+            script.onload = function() {
+                console.log('UnityLoader.js loaded successfully');
+                startUnityGame();
+            };
+            script.onerror = function() {
+                console.error('Failed to load UnityLoader.js');
+                document.getElementById('loadingText').textContent = 'Failed to load Unity framework';
+            };
+            document.head.appendChild(script);
         }
-      });
 
-      document.addEventListener('fullscreenchange', function() {
-        setTimeout(onResize, 100);
-      });
+        function startUnityGame() {
+            if (typeof UnityLoader === 'undefined') {
+                console.error('UnityLoader is not defined after script load');
+                document.getElementById('loadingText').textContent = 'Unity framework not available';
+                return;
+            }
+
+            console.log('Starting Unity game instantiation...');
+            
+            try {
+                var gameInstance = UnityLoader.instantiate("unity-canvas", "Build/10MinutesTillDawnWebGL.json", {
+                    onProgress: function (gameInstance, progress) {
+                        console.log('Loading progress: ' + Math.round(progress * 100) + '%');
+                        document.getElementById('loadingBarFull').style.width = (100 * progress) + "%";
+                        document.getElementById('loadingText').textContent = Math.round(progress * 100) + '%';
+                    },
+                    onComplete: function (gameInstance) {
+                        console.log('Unity game loaded completely!');
+                        document.getElementById('loadingBar').classList.add('hidden');
+                        resizeCanvas();
+                    },
+                    onError: function(gameInstance, error) {
+                        console.error('Unity loading error:', error);
+                        document.getElementById('loadingText').innerHTML = 
+                            'Loading failed<br><small>' + error + '</small>';
+                    }
+                });
+            } catch (error) {
+                console.error('Unity instantiation failed:', error);
+                document.getElementById('loadingText').innerHTML = 
+                    'Failed to start game<br><small>' + error.message + '</small>';
+            }
+        }
+
+        function resizeCanvas() {
+            var canvas = document.getElementById('unity-canvas');
+            var container = document.getElementById('gameContainer');
+            
+            if (!canvas) return;
+
+            var targetAspect = 960 / 600;
+            var windowAspect = window.innerWidth / window.innerHeight;
+
+            if (windowAspect > targetAspect) {
+                canvas.style.height = window.innerHeight + "px";
+                canvas.style.width = (window.innerHeight * targetAspect) + "px";
+            } else {
+                canvas.style.width = window.innerWidth + "px";
+                canvas.style.height = (window.innerWidth / targetAspect) + "px";
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Prevent right-click
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'CANVAS') {
+                e.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>
